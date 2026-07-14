@@ -1,0 +1,18 @@
+# 各リポジトリの .github/workflows/dependabot-automerge.yml に配置する呼び出しファイル。
+
+name: Dependabot auto-merge
+
+on: pull_request
+
+# 組織デフォルトの GITHUB_TOKEN は read-only のため、ここで明示的に昇格させる。
+# (reusable workflow 側は呼び出し側の権限を超えられない)
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    uses: manabibashi/workflows/.github/workflows/dependabot-automerge.yml@v1
+    with:
+      level: 3 # 実テストが回るリポジトリのみ 2(REPO_STANDARD §4)。CLAUDE.md 固有節にも記録

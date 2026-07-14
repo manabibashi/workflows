@@ -1,0 +1,63 @@
+# manabibashi/workflows/.github/workflows/dependabot-automerge.yml に配置(自動マージの実体)
+# 各リポジトリからは templates/caller-dependabot-automerge.yml 経由で呼び出す。
+# 注意: コミット前に `pinact run` で uses: を full-length SHA に固定すること(D-3)。
+#
+# 動作: 条件を満たす Dependabot PR に GitHub ネイティブの auto-merge を予約する。
+# 実際のマージは「必須ステータスチェック(ci / required-check)がすべて成功した時点」。
+# 条件を満たさない PR・CI 不合格の PR はオープンのまま残り、人間の判断キューになる。
+
+name: Common Dependabot auto-merge
+
+on:
+  workflow_call:
+    inputs:
+      level:
+        description: >-
+          自動マージ水準(REPO_STANDARD §4)。
+          1: すべて自動(予備・未使用) /
+          2: minor+patch 自動、major のみ人間(実テストがあるリポジトリ) /
+          3: patch と devDependencies の minor のみ自動(既定)
+        type: number
+        default: 3
+
+jobs:
+  automerge:
+    # 呼び出し側でも同じ if を掛けるが、防御的に二重チェック
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+
+      # グループ PR の update-type は「グループ内で最も大きい更新種別」になる。
+      # security updates も同じ semver 規則で判定される(B-5)。
+      - name: Decide by level
+        id: decide
+        env:
+          LEVEL: ${{ inputs.level }}
+          UPDATE_TYPE: ${{ steps.meta.outputs.update-type }}
+          DEP_TYPE: ${{ steps.meta.outputs.dependency-type }}
+        run: |
+          ok=false
+          case "$LEVEL" in
+            1) ok=true ;;
+            2) [ "$UPDATE_TYPE" != "version-update:semver-major" ] && ok=true ;;
+            3)
+              if [ "$UPDATE_TYPE" = "version-update:semver-patch" ]; then
+                ok=true
+              elif [ "$UPDATE_TYPE" = "version-update:semver-minor" ] && [ "$DEP_TYPE" = "direct:development" ]; then
+                ok=true
+              fi
+              ;;
+          esac
+          echo "level=$LEVEL update=$UPDATE_TYPE dep=$DEP_TYPE -> merge=$ok"
+          echo "merge=$ok" >> "$GITHUB_OUTPUT"
+
+      - name: Enable auto-merge (squash)
+        if: steps.decide.outputs.merge == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --auto --squash "$PR_URL"

@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # このリポジトリ自身の actions 更新(REPO_STANDARD §4 / 付録 B)。
+  # ここにはマニフェスト(npm 等)が無いため github-actions のみ。
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    cooldown:
+      default-days: 7
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+    open-pull-requests-limit: 10

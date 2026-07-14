@@ -1,0 +1,93 @@
+# manabibashi/workflows/.github/workflows/ci.yml に配置(共通CIの実体)
+# 各リポジトリからは templates/caller-ci.yml 経由で呼び出す。
+# 注意:
+# - コミット前に `pinact run` で uses: を full-length SHA に固定すること(D-3)
+# - actions のメジャーは Node 24 世代(以下は 2026-07-14 時点の最新)。以後の更新は
+#   dependabot(github-actions)が提案する
+
+name: Common CI
+
+on:
+  workflow_call:
+    inputs:
+      runtime:
+        description: "node | python | none"
+        type: string
+        default: "node"
+      runtime-version:
+        description: "省略時: node=22 / python は uv のプロジェクト設定に従う"
+        type: string
+        default: ""
+      working-directories:
+        description: 'JSON配列文字列。複数マニフェスト構成の例: ''["send-message","webhook"]'''
+        type: string
+        default: '["."]'
+      install-command:
+        description: "省略時: node は npm ci / python は uv sync"
+        type: string
+        default: ""
+      lint-command:
+        description: "空ならスキップ"
+        type: string
+        default: ""
+      test-command:
+        description: "空ならスキップ。空のリポジトリの automerge level は 3 とすること(REPO_STANDARD §4)"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: ${{ fromJSON(inputs.working-directories) }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.dir }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Node
+        if: inputs.runtime == 'node'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ inputs.runtime-version || '22' }}
+
+      - name: Setup Python (uv)
+        if: inputs.runtime == 'python'
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        with:
+          python-version: ${{ inputs.runtime-version }}
+
+      - name: Install
+        if: inputs.runtime != 'none'
+        run: ${{ inputs.install-command || (inputs.runtime == 'node' && 'npm ci' || 'uv sync') }}
+
+      - name: Lint
+        if: inputs.lint-command != ''
+        run: ${{ inputs.lint-command }}
+
+      - name: Test
+        if: inputs.test-command != ''
+        run: ${{ inputs.test-command }}
+
+  # 必須ステータスチェック用の集約ジョブ。
+  # ルールセットには「ci / required-check」(初回実行で実名を確認)だけを登録する。
+  # 将来ジョブを増やす場合は needs に追加するだけで全リポジトリのゲートが更新される。
+  required-check:
+    needs: [checks]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Aggregate results
+        env:
+          CHECKS: ${{ needs.checks.result }}
+        run: |
+          echo "checks=$CHECKS"
+          [ "$CHECKS" = "success" ] || exit 1

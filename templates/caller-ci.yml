@@ -1,0 +1,27 @@
+# 各リポジトリの .github/workflows/ci.yml に配置する呼び出しファイル。
+# ジョブ ID「ci」は変更禁止(必須チェック名「ci / required-check」を全リポジトリで揃えるため)。
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: manabibashi/workflows/.github/workflows/ci.yml@v1
+    with:
+      runtime: node # node | python | none
+      # runtime-version: "22"
+      # working-directories: '["send-message","webhook"]' # 複数マニフェスト構成の例
+      # lint-command: npm run lint
+      test-command: npm test # テストが無いリポジトリはこの行を削除(→ automerge level は 3)
+    secrets: inherit
