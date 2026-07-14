@@ -15,21 +15,29 @@
 
 ## セットアップ手順(初回のみ)
 
-1. private リポジトリ `manabibashi/workflows` を作成し、上記の配置でコミットする
-2. **Settings → Actions → General → Access を「Accessible from repositories in the organization」に変更**
-   (これを忘れると他リポジトリから呼び出せず、caller が全リポジトリで失敗する)
-3. `pinact run` を実行して `uses:` のタグ参照を full-length SHA に固定 → コミット(D-3)
-4. タグを打つ: `git tag v1 && git push origin v1`
+1. **public** リポジトリ `manabibashi/workflows` を作成し、上記の配置でコミットする
+   - **public であること**が必須【E-2 改】。private だと、組織内の public リポジトリ
+     (`praxiSpace-Python`)から reusable workflow を参照できず、caller が startup_failure で落ちる
+     (Actions のアクセス設定を「組織内から参照可」にしても解決しない)。
+     共通ワークフローはシークレットを含まない CI 定義のみなので public でよい
+   - private で運用する場合は Settings → Actions → General → Access を
+     「Accessible from repositories in the organization」にする必要がある(public なら不要)
+2. `pinact run` を実行して `uses:` のタグ参照を full-length SHA に固定 → コミット(D-3)
+   - **caller の `manabibashi/workflows@v1` 参照は SHA 化しない**(v1 の付け替えで伝播させるため。
+     REPO_STANDARD §5 の猶予期間中の許容例外)。pinact は caller も SHA 化してしまうので、
+     実行後に `@v1` へ戻すこと
+3. タグを打つ: `git tag v1 && git push origin v1`
    - 以後、実体を更新したら `git tag -f v1 && git push -f origin v1` で付け替える
    - 参照側(`@v1`)は自動で新実装を使う。挙動を固定したいリポジトリは SHA 参照に変えてもよい
-5. この README と同じ内容の dependabot.yml(github-actions エコシステム)をこのリポジトリ自身にも置く
-6. 組織設定の Dependabot で「private リポジトリへのアクセス」に本リポジトリ `workflows` を追加する
-   (各リポジトリの Dependabot が private な reusable workflow 参照を解決できるようにするため)
+4. dependabot.yml(github-actions エコシステム)をこのリポジトリ自身にも置く
 
 ## 各リポジトリへの展開手順(1 リポジトリ 15 分)
 
 1. `templates/` の 2 ファイルをコピーし、`with:` を実態に合わせる
    - `runtime` / `test-command` / `working-directories` を設定
+   - `operating-systems`: 既定は ubuntu のみ。Windows でも検証するリポジトリだけ
+     `'["ubuntu-latest","windows-latest"]'` を渡す(os × working-directories の matrix になり、
+     全レッグが `required-check` の集約対象に入る = Windows の失敗もマージを止める)
    - **automerge の `level`**: 実テストが回るなら 2、無ければ 3(REPO_STANDARD §4)
    - 既存の独自 automerge ワークフローは削除する
 2. PR を作成し、Checks 欄に `ci / required-check` が出て成功することを確認 → マージ
