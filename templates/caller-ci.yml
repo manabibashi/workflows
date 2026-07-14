@@ -22,6 +22,9 @@ jobs:
       runtime: node # node | python | none
       # runtime-version: "22"
       # working-directories: '["send-message","webhook"]' # 複数マニフェスト構成の例
+      # operating-systems: '["ubuntu-latest","windows-latest"]' # 既定は ubuntu のみ。
+      #   Windows でも検証するリポジトリだけ指定する(os × working-directories の matrix になり、
+      #   全レッグが required-check の集約対象に入る = Windows の失敗もマージを止める)
       # lint-command: npm run lint
       test-command: npm test # テストが無いリポジトリはこの行を削除(→ automerge level は 3)
     secrets: inherit

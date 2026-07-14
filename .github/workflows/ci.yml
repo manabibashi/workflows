@@ -22,6 +22,13 @@ on:
         description: 'JSON配列文字列。複数マニフェスト構成の例: ''["send-message","webhook"]'''
         type: string
         default: '["."]'
+      operating-systems:
+        description: >-
+          JSON配列文字列。既定は ubuntu のみ。Windows でも検証するリポジトリの例:
+          '["ubuntu-latest","windows-latest"]'。os × working-directories の matrix になり、
+          全レッグが required-check の集約対象に入る
+        type: string
+        default: '["ubuntu-latest"]'
       install-command:
         description: "省略時: node は npm ci / python は uv sync"
         type: string
@@ -40,11 +47,12 @@ permissions:
 
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
+        os: ${{ fromJSON(inputs.operating-systems) }}
         dir: ${{ fromJSON(inputs.working-directories) }}
     defaults:
       run:
