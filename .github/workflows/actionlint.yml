@@ -1,0 +1,40 @@
+# 共通ワークフローの実体(.github/workflows/)と templates/ を actionlint で静的検査する。
+# 目的: v1 タグ付け替えの前に、構文エラー・存在しない式・matrix の型崩れ等の破壊的変更を検出する。
+# このリポジトリは caller(共通 CI 呼び出し)を持たない方針のため(B-6)、軽量な専用ワークフローとして置く。
+
+name: actionlint
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      # 実体(.github/workflows/ 全体)。files 未指定 = actionlint の既定検出
+      - name: Lint workflow implementations
+        uses: raven-actions/actionlint@v2.2.0
+        with:
+          version: 1.7.12 # actionlint 本体の版も固定(latest にしない)
+          flags: "-color"
+
+      # templates/ の caller は「各リポジトリに置かれる前提」のファイルのため既定検出の対象外。
+      # files 指定で明示的に検査する(files を指定すると既定検出は置き換わるためステップを分ける)
+      - name: Lint caller templates
+        uses: raven-actions/actionlint@v2.2.0
+        with:
+          version: 1.7.12
+          flags: "-color"
+          files: "templates/caller-*.yml"
