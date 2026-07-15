@@ -1,6 +1,10 @@
 # 共通ワークフローの実体(.github/workflows/)と templates/ を actionlint で静的検査する。
 # 目的: v1 タグ付け替えの前に、構文エラー・存在しない式・matrix の型崩れ等の破壊的変更を検出する。
-# このリポジトリは caller(共通 CI 呼び出し)を持たない方針のため(B-6)、軽量な専用ワークフローとして置く。
+# このリポジトリは caller(共通 CI 呼び出し)を持たない方針のまま(B-6)、軽量な専用ワークフローとして置く。
+#
+# 実装ノート: 組織の Actions ポリシーは「GitHub 公式 + verified creators のみ」のため、
+# サードパーティ action(raven-actions/actionlint 等)は使えない(startup_failure になる)。
+# rhysd/actionlint のリリースバイナリを SHA256 検証付きでダウンロードして直接実行する。
 
 name: actionlint
 
@@ -20,21 +24,23 @@ jobs:
   actionlint:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    env:
+      # バージョンを上げるときは checksums.txt から linux_amd64 の SHA256 も更新すること
+      ACTIONLINT_VERSION: "1.7.12"
+      ACTIONLINT_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      # 実体(.github/workflows/ 全体)。files 未指定 = actionlint の既定検出
-      - name: Lint workflow implementations
-        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
-        with:
-          version: 1.7.12 # actionlint 本体の版も固定(latest にしない)
-          flags: "-color"
+      - name: Download actionlint (SHA256 verified)
+        run: |
+          curl -sSLo actionlint.tar.gz \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "${ACTIONLINT_SHA256}  actionlint.tar.gz" | sha256sum -c -
+          tar -xzf actionlint.tar.gz actionlint
 
-      # templates/ の caller は「各リポジトリに置かれる前提」のファイルのため既定検出の対象外。
-      # files 指定で明示的に検査する(files を指定すると既定検出は置き換わるためステップを分ける)
-      - name: Lint caller templates
-        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
-        with:
-          version: 1.7.12
-          flags: "-color"
-          files: "templates/caller-*.yml"
+      # 1) 実体(.github/workflows/ 全体。引数なし = actionlint の既定検出)
+      # 2) templates/ の caller(各リポジトリに置かれる前提のファイルのため既定検出の対象外。明示指定)
+      - name: Run actionlint
+        run: |
+          ./actionlint -color
+          ./actionlint -color templates/caller-*.yml
