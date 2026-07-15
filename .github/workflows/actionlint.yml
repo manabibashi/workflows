@@ -21,11 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       # 実体(.github/workflows/ 全体)。files 未指定 = actionlint の既定検出
       - name: Lint workflow implementations
-        uses: raven-actions/actionlint@v2.2.0
+        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
         with:
           version: 1.7.12 # actionlint 本体の版も固定(latest にしない)
           flags: "-color"
@@ -33,7 +33,7 @@ jobs:
       # templates/ の caller は「各リポジトリに置かれる前提」のファイルのため既定検出の対象外。
       # files 指定で明示的に検査する(files を指定すると既定検出は置き換わるためステップを分ける)
       - name: Lint caller templates
-        uses: raven-actions/actionlint@v2.2.0
+        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
         with:
           version: 1.7.12
           flags: "-color"
