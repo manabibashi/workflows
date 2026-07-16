@@ -16,8 +16,8 @@
 ## セットアップ手順(初回のみ)
 
 1. **public** リポジトリ `manabibashi/workflows` を作成し、上記の配置でコミットする
-   - **public であること**が必須【E-2 改】。private だと、組織内の public リポジトリ
-     (`praxiSpace-Python`)から reusable workflow を参照できず、caller が startup_failure で落ちる
+   - **public であること**が必須【E-2 改】。private だと、組織内の public リポジトリから
+     reusable workflow を参照できず、caller が startup_failure で落ちる
      (Actions のアクセス設定を「組織内から参照可」にしても解決しない)。
      共通ワークフローはシークレットを含まない CI 定義のみなので public でよい
    - private で運用する場合は Settings → Actions → General → Access を
@@ -54,9 +54,11 @@
 
 - **GITHUB_TOKEN によるマージは、push:main トリガーの Actions ワークフローを起動しない**(再帰防止仕様)。
   Actions で main へのデプロイを行うリポジトリでは、自動マージされたコミットのデプロイが走らない。
-  - 現状の影響: money-simulator(Firebase デプロイが Actions)だが、同リポジトリの Dependabot 対象は
-    github-actions のみでサイト内容が変わらないため実害なし
-  - Cloud Build 等の GitHub App 連携は GITHUB_TOKEN のマージでも発火する(LineMessaging の prod は問題なし)
+  - **Actions で main へデプロイするリポジトリが該当する**。ただし該当リポジトリでも、Dependabot の
+    対象が github-actions のみでデプロイ成果物が変わらない場合は実害が無い。
+  - **GitHub App 連携(Cloud Build 等)でデプロイするリポジトリは影響を受けない**。GITHUB_TOKEN の
+    マージでもデプロイが発火するため。
+  - どのリポジトリが該当するかは、private の REPO_STANDARD.md「GITHUB_TOKEN 制約の該当リポジトリ」を参照。
   - 将来必要になったら GitHub App トークン方式に切り替える
 - グループ PR の update-type 判定は「グループ内で最も大きい更新種別」
 - reusable workflow の権限は呼び出し側を超えられない。automerge の caller には
