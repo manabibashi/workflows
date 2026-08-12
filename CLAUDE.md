@@ -5,6 +5,11 @@
   gh api repos/manabibashi/.github/contents/REPO_STANDARD.md -H "Accept: application/vnd.github.raw+json" で取得
 - ブランチは main のみ。作業は短命ブランチ → PR → squash。force push・ブランチ削除・
   リポジトリ設定変更などの破壊的操作はユーザー確認必須
+- 例外【A-4】: マージ済み**ローカル**ブランチは、① `git fetch --prune` 後に upstream が gone
+  ② 対応 PR がマージ済み(`gh pr list --state merged --head <branch>`)
+  ③ ブランチ先端 SHA が当該 PR の headRefOid と一致(未 push コミット無し)
+  の 3 条件を検証できた場合のみ、確認なしで `git branch -D` で削除してよい
+  (squash 運用のため `-d` は失敗する)。リモートブランチの削除は対象外(確認必須のまま)
 - push / マージの最終実行はユーザー判断。Claude Code は PR 作成まで
 - タスク・ステータスは GitHub Issues で管理する。backlog.md 等の独自ファイルを作らない
 - プラン名や時限的な外部仕様をドキュメントに書かない(書く場合は日付を添える)
