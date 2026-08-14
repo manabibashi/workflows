@@ -7,7 +7,9 @@
   リポジトリ設定変更などの破壊的操作はユーザー確認必須
 - 例外【A-4】: マージ済み**ローカル**ブランチは、① `git fetch --prune` 後に upstream が gone
   ② 対応 PR がマージ済み(`gh pr list --state merged --head <branch>`)
-  ③ ブランチ先端 SHA が当該 PR の headRefOid と一致(未 push コミット無し)
+  ③ ブランチ先端 SHA が当該 PR の headRefOid と一致、または PR のコミット一覧
+  (`gh pr view <番号> --json commits --jq '.commits[].oid'`)に含まれる(未 push コミット無し。
+  PR の「Update branch」で main を取り込むと headRefOid はローカルに無いマージコミットになる)
   の 3 条件を検証できた場合のみ、確認なしで `git branch -D` で削除してよい
   (squash 運用のため `-d` は失敗する)。リモートブランチの削除は対象外(確認必須のまま)
 - push / マージの最終実行はユーザー判断。Claude Code は PR 作成まで
