@@ -2,6 +2,8 @@
 
 ## 組織共通ルール(REPO_STANDARD 準拠)
 
+- この節は REPO_STANDARD.md 付録 D の一字一句のコピー。**リポジトリ固有の注記をここに書き足さない**
+  (書くなら下のリポジトリ固有の節へ)。共通節は改訂のたびに機械的に差し替えるため書き足しは失われる
 - このリポジトリは manabibashi の REPO_STANDARD.md に準拠する。手元に無ければ
   gh api repos/manabibashi/.github/contents/REPO_STANDARD.md -H "Accept: application/vnd.github.raw+json" で取得
 - ブランチは main のみ。作業は短命ブランチ → PR → squash。force push・ブランチ削除・
@@ -28,9 +30,11 @@
 - プラン名や時限的な外部仕様をドキュメントに書かない(書く場合は日付を添える)
 - GitHub の参照・操作は GitHub MCP(接続済みなら)または gh CLI を使う
 - GitHub Actions を書く際は各 action の最新メジャーを確認してから使う(GitHub MCP または gh api)。
-  Node 20 世代(actions/checkout@v4 等)を新規に書かない
-- 下の「リポジトリ固有」節に、dependabot 構成・automerge level・デプロイ方式・
-  環境名の由来(ブランチ整理で消してはいけない名前)を記録する
+  EOL 予定・EOL 済みのランナー世代を新規に書かない
+  (2026-08 時点では Node 20 世代 = actions/checkout@v4 等が該当。Node 20 ランナーは 2026-09-16 に削除)
+- この共通節より下に**リポジトリ固有の節を H2 見出しで置く**(名称は任意)。共通節配下の H3 に
+  入れ子にしない(共通節を機械的に差し替える際に巻き込まれるため)。そこに dependabot 構成・
+  automerge level・デプロイ方式・環境名の由来(ブランチ整理で消してはいけない名前)を記録する
 
 ## リポジトリ固有
 
