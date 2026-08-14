@@ -24,6 +24,11 @@ jobs:
   automerge:
     # 呼び出し側でも同じ if を掛けるが、防御的に二重チェック
     if: github.event.pull_request.user.login == 'dependabot[bot]'
+    # caller 側でも同じ権限を明示している(reusable は呼び出し側の権限を超えられない)。
+    # ここに書くのは、このファイル単体で必要権限が読み取れるようにするため(REPO_STANDARD §5)
+    permissions:
+      contents: write
+      pull-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
