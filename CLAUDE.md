@@ -1,6 +1,7 @@
 # CLAUDE.md — manabibashi/workflows
 
 ## 組織共通ルール(REPO_STANDARD 準拠)
+
 - このリポジトリは manabibashi の REPO_STANDARD.md に準拠する。手元に無ければ
   gh api repos/manabibashi/.github/contents/REPO_STANDARD.md -H "Accept: application/vnd.github.raw+json" で取得
 - ブランチは main のみ。作業は短命ブランチ → PR → squash。force push・ブランチ削除・
