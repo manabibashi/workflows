@@ -1,6 +1,7 @@
 # CLAUDE.md — manabibashi/workflows
 
 ## 組織共通ルール(REPO_STANDARD 準拠)
+
 - このリポジトリは manabibashi の REPO_STANDARD.md に準拠する。手元に無ければ
   gh api repos/manabibashi/.github/contents/REPO_STANDARD.md -H "Accept: application/vnd.github.raw+json" で取得
 - ブランチは main のみ。作業は短命ブランチ → PR → squash。force push・ブランチ削除・
@@ -8,11 +9,21 @@
 - 例外【A-4】: マージ済み**ローカル**ブランチは、① `git fetch --prune` 後に upstream が gone
   ② 対応 PR がマージ済み(`gh pr list --state merged --head <branch>`)
   ③ ブランチ先端 SHA が当該 PR の headRefOid と一致、または PR のコミット一覧
-  (`gh pr view <番号> --json commits --jq '.commits[].oid'`)に含まれる(未 push コミット無し。
-  PR の「Update branch」で main を取り込むと headRefOid はローカルに無いマージコミットになる)
+  (`gh pr view <番号> --json commits --jq '.commits[].oid'`)に含まれる
   の 3 条件を検証できた場合のみ、確認なしで `git branch -D` で削除してよい
-  (squash 運用のため `-d` は失敗する)。リモートブランチの削除は対象外(確認必須のまま)
-- push / マージの最終実行はユーザー判断。Claude Code は PR 作成まで
+  (squash 運用のため `-d` は失敗する)。③が成立していれば未 push コミットが無いことも保証される。
+  ③に「または」が必要なのは、PR の「Update branch」で main を取り込むと headRefOid が
+  ローカルに無いマージコミットになり、先端 SHA と一致しなくなるため。
+  リモートブランチの削除は対象外(確認必須のまま)
+- ローカル同期【A-5】: `git fetch --prune` はいつでも確認なしで可(A-4 判定前は必須)。
+  `git switch main` は作業ツリーがクリーンならいつでも可(A-4 で現在いるブランチを
+  削除するための退避を含む)。`git pull --ff-only` による main の更新は新規ブランチを
+  切る直前のみ可。それ以外は main が遅れていても放置してよい
+- push とマージ【A-6】: Claude Code は作業ブランチの push と PR 作成まで。マージはユーザーが
+  実行する。main への直接 push はしない
+- 投稿の帰属【A-7】: Claude Code が GitHub に投稿する本文(Issue・PR・コメント・レビュー返信)は
+  冒頭に `🤖 Generated with [Claude Code](https://claude.com/claude-code)` を置く。
+  コミットは `Co-Authored-By` トレーラーで示す
 - タスク・ステータスは GitHub Issues で管理する。backlog.md 等の独自ファイルを作らない
 - プラン名や時限的な外部仕様をドキュメントに書かない(書く場合は日付を添える)
 - GitHub の参照・操作は GitHub MCP(接続済みなら)または gh CLI を使う
