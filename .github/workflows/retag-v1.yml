@@ -1,0 +1,39 @@
+# 共通ワークフローの実体(.github/workflows/ 配下)が main に入ったら v1 タグを付け替える(REPO_STANDARD §5【G-6】)。
+# caller は @v1 で参照するため、付け替えなければ main へマージしても配信されない。
+# 手動運用では付け替え忘れが 2 回(2026-08-14、2026-09-04)起きたため自動化した。
+#
+# 注意: GITHUB_TOKEN による自動マージ(Dependabot automerge)は push:main トリガーを起動しない。
+#       このリポジトリ自身の Dependabot PR は人間がマージする(CLAUDE.md「automerge level」)。
+#       失敗は Actions の通知と、manabibashi/.github の audit-content.ps1(v1 と main の差分)で検知する。
+
+name: retag-v1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: retag-v1
+  cancel-in-progress: false
+
+jobs:
+  retag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Move v1 to the merged commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f v1 "$GITHUB_SHA"
+          git push -f origin refs/tags/v1
+          echo "v1 -> $GITHUB_SHA"

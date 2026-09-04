@@ -51,13 +51,16 @@
 
 ### automerge level
 - **このリポジトリ自身は共通 automerge の caller を置いていない**(Dependabot PR は人間がマージする)。
-  自分自身を `@v1` で呼ぶと、v1 タグ付け替え時の挙動が読みにくくなるため。
+  自分自身を `@v1` で呼ぶと v1 タグ付け替え時の挙動が読みにくくなるうえ、GITHUB_TOKEN による
+  自動マージは push:main トリガーを起動せず `retag-v1.yml` が走らないため。
 
 ### 更新の伝播
-- 実体を修正 → main へマージ → `git tag -f v1 && git push -f origin v1` で v1 を付け替える。
-  参照側(`@v1`)は次回実行から新実装を使う。
+- 実体(`.github/workflows/` 配下)を修正 → main へマージ → `retag-v1.yml` が v1 を自動で付け替える【G-6】。
+  参照側(`@v1`)は次回実行から新実装を使う。手動の `git tag -f v1 && git push -f origin v1` は
+  最後の手段(force push のためユーザーが実行)。
+- `retag-v1.yml` 自身も `.github/workflows/` 配下なので、その変更でも v1 が動く(実害なし)。
 - `uses:` は full-length SHA でピン留めする(`pinact run`、D-3)。templates/ の `manabibashi/workflows@v1`
-  参照は猶予期間中の許容例外(REPO_STANDARD §5)。
+  参照は SHA 化しない(reusable workflow は組織設定「SHA ピン留め必須」の対象外。REPO_STANDARD §5)。
 
 ### Actions のアクセス設定
 - Settings → Actions → General → Access = **Accessible from repositories in the organization**。

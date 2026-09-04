@@ -2,7 +2,7 @@
 
 組織全リポジトリの CI と Dependabot 自動マージの**実体**をここに集約する(REPO_STANDARD §5)。
 各リポジトリには `templates/` の薄い呼び出しファイルだけを置く。
-実体を修正 → `v1` タグを付け替えれば、全リポジトリに即反映される。
+実体を修正して main にマージすると `retag-v1.yml` が `v1` タグを付け替え、全リポジトリに即反映される。
 
 ## ファイル構成
 
@@ -24,10 +24,11 @@
      「Accessible from repositories in the organization」にする必要がある(public なら不要)
 2. `pinact run` を実行して `uses:` のタグ参照を full-length SHA に固定 → コミット(D-3)
    - **caller の `manabibashi/workflows@v1` 参照は SHA 化しない**(v1 の付け替えで伝播させるため。
-     REPO_STANDARD §5 の猶予期間中の許容例外)。pinact は caller も SHA 化してしまうので、
-     実行後に `@v1` へ戻すこと
-3. タグを打つ: `git tag v1 && git push origin v1`
-   - 以後、実体を更新したら `git tag -f v1 && git push -f origin v1` で付け替える
+     組織設定「SHA ピン留め必須」は reusable workflow を対象外にするので `@v1` のままでよい。REPO_STANDARD §5)。
+     pinact は caller も SHA 化してしまうので、実行後に `@v1` へ戻すこと
+3. タグを打つ: `git tag v1 && git push origin v1`(初回のみ)
+   - 以後、`.github/workflows/` 配下の変更が main に入ると `retag-v1.yml` が `v1` を自動で付け替える
+     (手動の `git tag -f` は最後の手段)
    - 参照側(`@v1`)は自動で新実装を使う。挙動を固定したいリポジトリは SHA 参照に変えてもよい
 4. dependabot.yml(github-actions エコシステム)をこのリポジトリ自身にも置く
 
@@ -66,7 +67,7 @@
 - actions のメジャーは Node 24 世代を使う(Node 20 ランナーは 2026-09-16 に完全削除され、
   @v4 世代は動かなくなる)。dependabot(github-actions)が major 更新を個別 PR で提案するので、
   放置せず取り込むこと
-- 組織の「Require actions to be pinned to a full-length commit SHA」を ON にすると、`@v1` タグ参照も
-  違反になる見込み(自組織参照が例外になるかは ON 前に要確認)。ON へ移行する際は各 caller を
-  SHA 参照へ切り替える。以後の共通ワークフロー更新の伝播は「v1 タグ付け替えで即時」から
-  「Dependabot の SHA 更新 PR(週次)」に変わる
+- 組織の「Require actions to be pinned to a full-length commit SHA」は ON(2026-09-04)。同設定は
+  reusable workflow を対象外にする(GitHub 公式ドキュメント)ため、caller の `@v1` 参照はそのままでよい
+- `retag-v1.yml` は GITHUB_TOKEN で `v1` を force push する。GITHUB_TOKEN による自動マージは push:main
+  トリガーを起動しないため、このリポジトリ自身の Dependabot PR は人間がマージする
