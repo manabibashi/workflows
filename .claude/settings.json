@@ -1,0 +1,17 @@
+{
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "opus",
+    "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1"
+  },
+  "extraKnownMarketplaces": {
+    "manabibashi": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/manabibashi/.github"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "manabibashi-standard@manabibashi": true
+  }
+}
